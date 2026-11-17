@@ -1,0 +1,121 @@
+name: Build MKamuy NAV Sender for Galaxy
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/main.yml'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Restore Android project embedded in workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/project"
+          cat <<'PROJECT_END_B64' | base64 --decode > "$RUNNER_TEMP/project.zip"
+          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
+          PROJECT_END_B64
+          unzip -t "$RUNNER_TEMP/project.zip" | tail -n 1
+          unzip -q "$RUNNER_TEMP/project.zip" -d "$RUNNER_TEMP/project"
+          test -f "$RUNNER_TEMP/project/settings.gradle"
+          echo "PROJECT_DIR=$RUNNER_TEMP/project" >> "$GITHUB_ENV"
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK 35 using runner tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          MANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -1)
+          test -n "$MANAGER" || { echo '::error::SDK manager not found'; exit 1; }
+          "$MANAGER" --install 'platforms;android-35' 'build-tools;35.0.0' 'platform-tools'
+      - name: Setup Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Compile APK
+        shell: bash
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle --no-daemon --console=plain --stacktrace :app:assembleDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MKamuy-NAV-Sender-APK
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
